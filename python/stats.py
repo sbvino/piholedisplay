@@ -35,6 +35,7 @@ from textwrap import dedent
 import requests
 import subprocess
 import json
+from time import gmtime, strftime
 
 api_url = 'http://localhost/admin/api.php'
 
@@ -69,6 +70,8 @@ def update(epd):
         font_bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 11)
         font_title = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 11)
         font_title_bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 11)
+        font_debug = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 8)
+
         # font = ImageFont.truetype('slkscr.ttf', 15)
         draw_black = ImageDraw.Draw(frame_black)
 
@@ -97,11 +100,11 @@ def update(epd):
             time.sleep(1)
             continue
 
-        frame_black.paste(pihole_logo_top, (-8, 4))
-        frame_red.paste(pihole_logo_bottom, (-8, 4))
+        frame_black.paste(pihole_logo_top, (-8, 2))
+        frame_red.paste(pihole_logo_bottom, (-8, 2))
         draw_red = ImageDraw.Draw(frame_red)
-        draw_red.text((10, height - 17), "Pi", font=font_title, fill=fill_color)
-        draw_red.text(  (23, height - 17), "-hole", font=font_title_bold, fill=fill_color)
+        draw_red.text((10, height - 21), "Pi", font=font_title, fill=fill_color)
+        draw_red.text((23, height - 21), "-hole", font=font_title_bold, fill=fill_color)
 
         draw_black.text((xt, top + 0), "HOST: ", font=font_bold, fill=fill_color)
         draw_black.text((xc, top + 0), host, font=font, fill=fill_color)
@@ -118,8 +121,10 @@ def update(epd):
         draw_black.text((xt, top + 90), "DNS Queries: ", font=font_bold, fill=fill_color)
         draw_black.text((xc2, top + 90), str(dnsqueries), font=font, fill=fill_color)
 
+        draw_black.text((21, height - 8), strftime("%H:%M", gmtime()), font=font_debug, fill=fill_color)
+
         epd.display_frame(epd.get_frame_buffer(frame_black.transpose(PIL.Image.ROTATE_90)),
-                        epd.get_frame_buffer(frame_red.transpose(PIL.Image.ROTATE_90)))
+                          epd.get_frame_buffer(frame_red.transpose(PIL.Image.ROTATE_90)))
         print "sleeping"
         epd.sleep()
         epd.delay_ms(60 * 1000)
@@ -131,7 +136,7 @@ def main():
     try:
         update(epd)
     finally:
-        print "sleeping before leaving"
+        print "sleeping epd before leaving"
         epd.sleep()
 
 if __name__ == '__main__':
