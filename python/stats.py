@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# encoding: utf-8
 
  #  @filename   :   main.cpp
  #  @brief      :   2.13inch e-paper display demo
@@ -24,6 +25,7 @@
  # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  # THE SOFTWARE.
  ##
+from __future__ import unicode_literals
 
 import epd2in13b
 import time
@@ -121,13 +123,18 @@ def update(epd):
         draw_black.text((xt, top + 90), "DNS Queries: ", font=font_bold, fill=fill_color)
         draw_black.text((xc2, top + 90), str(dnsqueries), font=font, fill=fill_color)
 
-        draw_black.text((21, height - 8), strftime("%H:%M", gmtime()), font=font_debug, fill=fill_color)
+        draw_black.text((14, height - 10), u"↻: ", font=font, fill=fill_color)
+        draw_black.text((24, height - 8), strftime("%H:%M", gmtime()), font=font_debug, fill=fill_color)
 
         epd.display_frame(epd.get_frame_buffer(frame_black.transpose(PIL.Image.ROTATE_90)),
                           epd.get_frame_buffer(frame_red.transpose(PIL.Image.ROTATE_90)))
-        print "sleeping"
+        sleep_sec = 10 * 60
+        print "sleeping {0} sec ({1} min) at {1}".format(sleep_sec, sleep_sec / 60,
+                                                         strftime("%H:%M", gmtime()))
         epd.sleep()
-        epd.delay_ms(60 * 1000)
+        epd.delay_ms(sleep_sec * 1000)
+        # awakening the display
+        epd.init()
 
 def main():
     print "initing screen..."
