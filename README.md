@@ -29,3 +29,7 @@
   - Lastly we just want to make this run at boot. We'll do that the easy way by editing
     `/etc/rc.local` adding `/home/pi/piholedisplay/start-pihole-stat.sh &` before `exit 0`.
   - Then save and you can reboot to test it out
+
+Use sudo cp pihole-stati.service /etc/systemd/system
+sudo systemctl daemon-reload
+sudo systemctl enable pihole-stats.service

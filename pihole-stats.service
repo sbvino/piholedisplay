@@ -1,0 +1,10 @@
+[Unit]
+Description=pihole stats
+After=syslog.target network.target auditd.service
+
+[Service]
+User=pi
+ExecStart=/home/pi/piholedisplay/start-pihole-stat.sh
+
+[Install]
+WantedBy=multi-user.target
