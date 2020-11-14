@@ -27,123 +27,246 @@
  ##
 from __future__ import unicode_literals
 
-import epd2in13b
-import time
-import Image
-import ImageDraw
-import ImageFont
-import PIL
-from textwrap import dedent
+import json
+import pprint
+import random
+import re
 import requests
 import subprocess
-import json
-from time import gmtime, strftime
 
-api_url = 'http://localhost/admin/api.php'
+from dotmap import DotMap
+from lib import epd2in13b 
 
-def deep_reset(epd):
-    print "resetting to white..."
-    white_screen = Image.new('1', (epd2in13b.EPD_WIDTH, epd2in13b.EPD_HEIGHT), 255)
-    epd.display_frame(epd.get_frame_buffer(white_screen), epd.get_frame_buffer(white_screen))
-    epd.delay_ms(1000)
+import time
+from time import localtime, strftime
+
+import PIL
+from PIL import Image
+from PIL import ImageFont
+from PIL import ImageDraw
+
+cfg = DotMap(dict(
+    api_url = 'http://localhost/admin/api.php',
+    interval_min = 10,
+    draw_logo = False,
+    chart_height = 80.0,
+    current_row = 0,
+    x_stat   = (62, 102),
+    x_result = (62, 148),
+    
+    newline = '\n',
+    ads_labels = [
+        'Ads Blocked',
+        'Ads YEETed',
+        'Ads DENIED',
+        'Times saved',
+        'Banhammered'
+    ]
+))
 
 def update(epd):
-
-    # EPD 2 inch 13 b HAT is rotated 90 clockwize and does not support partial update
-    # But has amazing 2 colors
-    print "drawing status"
+    IO.log_obj('Configuration:', cfg.toDict(), 2)
+    IO.log('Rendering status')
+    
     width = epd2in13b.EPD_HEIGHT
     height = epd2in13b.EPD_WIDTH
-    top = 2
-    fill_color = 0
-    xt = 70
-    xc = 120
-    xc2 = 164
-
+    
     while True:
         frame_black = Image.new('1', (width, height), 255)
-        frame_red = Image.new('1', (width, height), 255)
+        frame_red   = Image.new('1', (width, height), 255)
 
-        pihole_logo_top = Image.open('pihole-bw-80-top.bmp')
-        pihole_logo_bottom = Image.open('pihole-bw-80-bottom.bmp')
-        # pihole_logo = Image.open('monocolo    r.bmp')
+        black = ImageDraw.Draw(frame_black)
+        red   = ImageDraw.Draw(frame_red)
 
-        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 10)
-        font_bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 11)
-        font_title = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 11)
-        font_title_bold = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf', 11)
-        font_debug = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf', 8)
+        black.rectangle((0, 0, width, height), outline = 0, fill = None)
 
-        # font = ImageFont.truetype('slkscr.ttf', 15)
-        draw_black = ImageDraw.Draw(frame_black)
+        ip        = IO.shell('hostname -I | cut -d" " -f1')
+        host      = IO.shell('hostname').lower() + '.local'
+        mem_usage = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB %.2f%%", $3,$2,$3*100/$2 }\'')
+        disk      = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB    %s", $3,$2,$5}\'')
 
-        draw_black.rectangle((0, 0, width, height), outline=0, fill=None)
-
-        ip = subprocess.check_output( "hostname -I | cut -d' ' -f1", shell=True).strip()
-        print "ip:", ip
-        host = subprocess.check_output("hostname", shell=True).strip() + ".local"
-        print "host:", host
-        mem_usage = subprocess.check_output(dedent("""
-            free -m | awk 'NR==2{printf \"Mem: %s/%sMB %.2f%%\", $3,$2,$3*100/$2 }'
-            """).strip(), shell=True).replace("Mem: ", "")
-        print "memory usage:", mem_usage
-        disk = subprocess.check_output(dedent("""
-            df -h | awk '$NF==\"/\"{printf \"Disk: %d/%dGB %s\", $3,$2,$5}'
-            """).strip(), shell=True).replace("Disk: ", "")
-        print "disk:", disk
-
+        IO.log(
+'''IP:           {0}
+Host:         {1}
+Memory usage: {2}
+Disk:         {3}'''.format(ip, host, mem_usage, disk))
+        
         try:
-            r = requests.get(api_url)
-            data = json.loads(r.text)
-            dnsqueries = data['dns_queries_today']
-            adsblocked = data['ads_blocked_today']
-            clients = data['unique_clients']
+            data = IO.get_json(cfg.api_url)
+            
+            clients        = data['unique_clients']
+            ads_blocked    = data['ads_blocked_today']
+            ads_percentage = data['ads_percentage_today']
+            dns_queries    = data['dns_queries_today']
+            
+            IO.log_obj('API response:', data)
         except KeyError:
             time.sleep(1)
             continue
 
-        frame_black.paste(pihole_logo_top, (-8, 2))
-        frame_red.paste(pihole_logo_bottom, (-8, 2))
-        draw_red = ImageDraw.Draw(frame_red)
-        draw_red.text((10, height - 21), "Pi", font=font_title, fill=fill_color)
-        draw_red.text((23, height - 21), "-hole", font=font_title_bold, fill=fill_color)
+        try:
+            data = IO.get_json(cfg.api_url + '?overTimeData10mins')
 
-        draw_black.text((xt, top + 0), "HOST: ", font=font_bold, fill=fill_color)
-        draw_black.text((xc, top + 0), host, font=font, fill=fill_color)
-        draw_black.text((xt, top + 15), "IP: ", font=font_bold, fill=fill_color)
-        draw_black.text((xc, top + 15), str(ip), font=font, fill=fill_color)
-        draw_black.text((xt, top + 30), "Mem:",  font=font_bold, fill=fill_color)
-        draw_black.text((xc, top + 30), str(mem_usage),  font=font, fill=fill_color)
-        draw_black.text((xt, top + 45), "Disk:",  font=font_bold, fill=fill_color)
-        draw_black.text((xc, top + 45),  str(disk),  font=font, fill=fill_color)
-        draw_black.text((xt, top + 60), "Ads Blocked: ", font=font_bold, fill=fill_color)
-        draw_black.text((xc2, top + 60), str(adsblocked), font=font, fill=fill_color)
-        draw_black.text((xt, top + 75), "Clients:", font=font_bold, fill=fill_color)
-        draw_black.text((xc2, top + 75), str(clients), font=font, fill=fill_color)
-        draw_black.text((xt, top + 90), "DNS Queries: ", font=font_bold, fill=fill_color)
-        draw_black.text((xc2, top + 90), str(dnsqueries), font=font, fill=fill_color)
+            domains = Collections.dict_to_columns(data['domains_over_time'])
+            ads     = Collections.dict_to_columns(data['ads_over_time'])
+        except KeyError:
+            time.sleep(1)
+            continue
 
-        draw_black.text((14, height - 10), u"↻: ", font=font, fill=fill_color)
-        draw_black.text((24, height - 8), strftime("%H:%M", gmtime()), font=font_debug, fill=fill_color)
+        ads_blocked_label = random.choice(cfg.ads_labels)
+           
+        if cfg.draw_logo:
+            Renderer.draw_logo(frame_black, frame_red)
+        else:
+            Renderer.draw_charts((black, domains), (red, ads))
 
-        epd.display_frame(epd.get_frame_buffer(frame_black.transpose(PIL.Image.ROTATE_90)),
-                          epd.get_frame_buffer(frame_red.transpose(PIL.Image.ROTATE_90)))
-        sleep_sec = 10 * 60
-        print "sleeping {0} sec ({1} min) at {1}".format(sleep_sec, sleep_sec / 60,
-                                                         strftime("%H:%M", gmtime()))
+        cfg.current_row = 0
+        
+        Text.row(black, cfg.x_stat, 'HOST:', host)
+        Text.row(black, cfg.x_stat, 'IP:',   ip)
+        Text.row(black, cfg.x_stat, 'Mem:',  mem_usage)
+        Text.row(black, cfg.x_stat, 'Disk:', disk)
+
+        Text.row(black, cfg.x_result, 'Clients:', clients)
+        Text.row(black, cfg.x_result, ads_blocked_label + ':', '{0} {1:.2f}%'.format(ads_blocked, ads_percentage))
+        Text.row(black, cfg.x_result, 'DNS Queries:', dns_queries)
+
+        Text.line(red, 6,  height - 24, 'Pi', size = 11)
+        Text.line(red, 19, height - 24, '-hole:', True)
+
+        Text.line(black, 10, height - 14, u'↻:')
+        Text.line(black, 20, height - 12, strftime('%H:%M', localtime()), size = 8)
+
+        epd.display_frame(
+            epd.get_frame_buffer(frame_black.transpose(PIL.Image.ROTATE_90)),
+            epd.get_frame_buffer(frame_red.transpose(PIL.Image.ROTATE_90)))
+        
+        IO.log('Rendering completed', 
+            'Sleeping for {0} min at {1}'.format( cfg.interval_min, strftime('%H:%M:%S', localtime())))
         epd.sleep()
-        epd.delay_ms(sleep_sec * 1000)
+        epd.delay_ms(cfg.interval_min * 60 * 1000)
+
         # awakening the display
         epd.init()
 
+class Text:
+    @classmethod
+    def row(self, draw, x, label, value):
+        y = cfg.current_row * 15
+        self.line(draw, x[0], y,     str(label), True)
+        self.line(draw, x[1], y + 1, str(value), False)
+        cfg.current_row += 1
+
+    @classmethod
+    def line(_, draw, x, y, string, bold = False, size = 10):
+        top = 2
+
+        font_name = ('DejaVuSansMono', 'DejaVuSansMono-Bold')[bold]
+        font_size = (size, 11)[bold]
+        font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/' + font_name + '.ttf', font_size)
+
+        draw.text(
+            (x, top + y),
+            string,
+            font = font,
+            fill = 0)
+    
+    @classmethod
+    def replace(_, str, replacements):
+        for old, new in replacements:
+            str = re.sub(old, new, str)
+        return str
+        
+class Renderer:
+    @classmethod
+    def draw_logo(_, frame_black, frame_red):      
+        IO.log('Rendering logo')
+        
+        pihole_logo_top    = Image.open('img/pihole-bw-80-top.bmp')
+        pihole_logo_bottom = Image.open('img/pihole-bw-80-bottom.bmp')
+        frame_black.paste(pihole_logo_top, (-12, 2))
+        frame_red.paste(pihole_logo_bottom, (-12, 2))
+
+    @classmethod
+    def draw_charts(self, (bottom_color, bottom_chart), (top_color, top_chart)):
+        IO.log('Rendering charts')
+        
+        factor = max(bottom_chart) / cfg.chart_height
+
+        self.draw_chart(bottom_color, bottom_chart, factor)
+        self.draw_chart(top_color, top_chart, factor)
+
+    @classmethod
+    def draw_chart(_, color, data, factor):
+        chart_bottom = epd2in13b.EPD_WIDTH - 22
+        columns = Collections.div_array(data, factor)
+        for i, val in enumerate(columns):
+            color.rectangle((i * 3 + 2, chart_bottom - val, i * 3 + 3, chart_bottom), outline = 0, fill = 1)
+
+class IO:
+    @classmethod
+    def shell(_, command):
+        return subprocess.check_output(command, shell = True).strip()
+
+    @classmethod
+    def get_json(_, url):
+        r = requests.get(url)
+        return json.loads(r.text)
+    
+    @classmethod
+    def log_obj(self, title, obj, depth = 1):
+        pp = pprint.PrettyPrinter(indent = 2, depth = depth)
+        
+        str = Text.replace(
+            pp.pformat(obj),
+            [
+                ('u?\'', '\''),
+                ('^{', '{' + cfg.newline + ' '),
+                ('}$', cfg.newline + '}')
+            ])
+            
+        self.log(title, str)
+
+    @classmethod
+    def log(_, *args):
+        print cfg.newline + cfg.newline.join(args)
+    
+class Collections:
+    @classmethod
+    def dict_to_columns(_, dict):
+        length = 20
+        entries_per_column = len(dict) / length
+
+        colums = [0] * length
+        index_dict = 0
+
+        for key in dict:
+            index = index_dict / entries_per_column;
+            if index >= length:
+                continue
+            colums[index] += dict[key]
+            index_dict += 1
+
+        return colums
+
+    @classmethod
+    def div_array(_, array, factor):
+        return [int(i / factor) for i in array]
+
+def deep_reset(epd):
+    IO.log('Resetting to white...')
+    white_screen = Image.new('1', (epd2in13b.EPD_WIDTH, epd2in13b.EPD_HEIGHT), 255)
+    epd.display_frame(epd.get_frame_buffer(white_screen), epd.get_frame_buffer(white_screen))
+    epd.delay_ms(1000)
+    
 def main():
-    print "initing screen..."
+    IO.log('Initiating screen...')
     epd = epd2in13b.EPD()
     epd.init()
     try:
         update(epd)
     finally:
-        print "sleeping epd before leaving"
+        IO.log('Sleeping epd before leaving')
         epd.sleep()
 
 if __name__ == '__main__':
