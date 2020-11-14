@@ -48,11 +48,12 @@ from PIL import ImageDraw
 cfg = DotMap(dict(
     api_url = 'http://localhost/admin/api.php',
     interval_min = 10,
-    draw_logo = False,
     chart_height = 80.0,
     current_row = 0,
     x_stat   = (62, 102),
     x_result = (62, 148),
+    draw_logo = False,
+    draw_inverted = True,
     
     newline = '\n',
     ads_labels = [
@@ -72,8 +73,8 @@ def update(epd):
     height = epd2in13b.EPD_WIDTH
     
     while True:
-        frame_black = Image.new('1', (width, height), 255)
-        frame_red   = Image.new('1', (width, height), 255)
+        frame_black = Renderer.new()
+        frame_red   = Renderer.new()
 
         black = ImageDraw.Draw(frame_black)
         red   = ImageDraw.Draw(frame_red)
@@ -137,9 +138,8 @@ Disk:         {3}'''.format(ip, host, mem_usage, disk))
         Text.line(black, 10, height - 14, u'↻:')
         Text.line(black, 20, height - 12, strftime('%H:%M', localtime()), size = 8)
 
-        epd.display_frame(
-            epd.get_frame_buffer(frame_black.transpose(PIL.Image.ROTATE_90)),
-            epd.get_frame_buffer(frame_red.transpose(PIL.Image.ROTATE_90)))
+        rotation = (PIL.Image.ROTATE_90, PIL.Image.ROTATE_270)[cfg.draw_inverted]
+        Renderer.frame(epd, frame_black.transpose(rotation), frame_red.transpose(rotation))
         
         IO.log('Rendering completed', 
             'Sleeping for {0} min at {1}'.format( cfg.interval_min, strftime('%H:%M:%S', localtime())))
@@ -203,6 +203,14 @@ class Renderer:
         for i, val in enumerate(columns):
             color.rectangle((i * 3 + 2, chart_bottom - val, i * 3 + 3, chart_bottom), outline = 0, fill = 1)
 
+    @classmethod
+    def frame(_, epd, black, red):
+        epd.display_frame(epd.get_frame_buffer(black), epd.get_frame_buffer(red))
+
+    @classmethod
+    def new(_):
+        return Image.new('1', (epd2in13b.EPD_HEIGHT, epd2in13b.EPD_WIDTH), 255)
+
 class IO:
     @classmethod
     def shell(_, command):
@@ -255,8 +263,8 @@ class Collections:
 
 def deep_reset(epd):
     IO.log('Resetting to white...')
-    white_screen = Image.new('1', (epd2in13b.EPD_WIDTH, epd2in13b.EPD_HEIGHT), 255)
-    epd.display_frame(epd.get_frame_buffer(white_screen), epd.get_frame_buffer(white_screen))
+    white_screen = Renderer.new()
+    Renderer.frame(epd, white_screen, white_screen)
     epd.delay_ms(1000)
     
 def main():
