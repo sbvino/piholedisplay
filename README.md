@@ -12,9 +12,10 @@
   - Enable spi, i2c and edit the modules config file as given [here](https://www.waveshare.com/wiki/Pioneer600#Configuring_the_interfaces)
   - [Optional] Download demo code from [here](https://www.waveshare.com/wiki/File:2.13inch_e-Paper_HAT-code.7z) and run it to make sure everything is working
 
-  - also install the requests library (needs pip to be installed)
+  - also install the requests library and dotmap libraries (needs pip to be installed)
     ~~~~
     sudo pip install requests
+    pip3 install dotmap
     ~~~~
 ### Final steps
   - If you downloaded the demo code, just place the stats.py inside the 2.13inch_e-Paper_HAT-code/raspberrypi/python folder
