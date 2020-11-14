@@ -47,6 +47,10 @@ from PIL import ImageDraw
 
 cfg = DotMap(dict(
     api_url = 'http://localhost/admin/api.php',
+    
+    width = epd2in13b.EPD_HEIGHT,
+    height = epd2in13b.EPD_WIDTH,
+    
     interval_min = 10,
     chart_height = 80.0,
     current_row = 0,
@@ -69,9 +73,6 @@ def update(epd):
     IO.log_obj('Configuration:', cfg.toDict(), 2)
     IO.log('Rendering status')
     
-    width = epd2in13b.EPD_HEIGHT
-    height = epd2in13b.EPD_WIDTH
-    
     while True:
         frame_black = Renderer.new()
         frame_red   = Renderer.new()
@@ -79,18 +80,18 @@ def update(epd):
         black = ImageDraw.Draw(frame_black)
         red   = ImageDraw.Draw(frame_red)
 
-        black.rectangle((0, 0, width, height), outline = 0, fill = None)
+        black.rectangle((0, 0, cfg.width, cfg.height), outline = 0, fill = None)
 
-        ip        = IO.shell('hostname -I | cut -d" " -f1')
-        host      = IO.shell('hostname').lower() + '.local'
-        mem_usage = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB %.2f%%", $3,$2,$3*100/$2 }\'')
-        disk      = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB    %s", $3,$2,$5}\'')
-
+        ip              = IO.shell('hostname -I | cut -d" " -f1')
+        host            = IO.shell('hostname').lower() + '.local'
+        mem, mem_part   = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB#%.2f%%", $3,$2,$3*100/$2 }\'').split('#', 1)
+        disk, disk_part = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB#%s", $3,$2,$5}\'').split('#', 1)        
+        
         IO.log(
 '''IP:           {0}
 Host:         {1}
-Memory usage: {2}
-Disk:         {3}'''.format(ip, host, mem_usage, disk))
+Memory usage: {2} {3}
+Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
         
         try:
             data = IO.get_json(cfg.api_url)
@@ -125,18 +126,23 @@ Disk:         {3}'''.format(ip, host, mem_usage, disk))
         
         Text.row(black, cfg.x_stat, 'HOST:', host)
         Text.row(black, cfg.x_stat, 'IP:',   ip)
-        Text.row(black, cfg.x_stat, 'Mem:',  mem_usage)
+        Text.row(black, cfg.x_stat, 'Mem:',  mem)
         Text.row(black, cfg.x_stat, 'Disk:', disk)
+        
+        Text.line(red, 2, 31, mem_part, align = 'right')
+        Text.line(red, 2, 46, disk_part, align = 'right')
 
         Text.row(black, cfg.x_result, 'Clients:', clients)
-        Text.row(black, cfg.x_result, ads_blocked_label + ':', '{0} {1:.2f}%'.format(ads_blocked, ads_percentage))
+        Text.row(black, cfg.x_result, ads_blocked_label + ':', ads_blocked)
         Text.row(black, cfg.x_result, 'DNS Queries:', dns_queries)
+        
+        Text.line(red, 2, 76, '{0:.2f}%'.format(ads_percentage), align = 'right')
 
-        Text.line(red, 6,  height - 24, 'Pi', size = 11)
-        Text.line(red, 19, height - 24, '-hole:', True)
+        Text.line(red, 7,  cfg.height - 24, 'Pi', size = 11)
+        Text.line(red, 20, cfg.height - 24, '-hole', True)
 
-        Text.line(black, 10, height - 14, u'↻:')
-        Text.line(black, 20, height - 12, strftime('%H:%M', localtime()), size = 8)
+        Text.line(black, 13, cfg.height - 14, u'↻:')
+        Text.line(black, 23, cfg.height - 12, strftime('%H:%M', localtime()), size = 8)
 
         rotation = (PIL.Image.ROTATE_90, PIL.Image.ROTATE_270)[cfg.draw_inverted]
         Renderer.frame(epd, frame_black.transpose(rotation), frame_red.transpose(rotation))
@@ -158,18 +164,25 @@ class Text:
         cfg.current_row += 1
 
     @classmethod
-    def line(_, draw, x, y, string, bold = False, size = 10):
+    def line(_, draw, x, y, string, bold = False, size = 10, align = ''):
         top = 2
 
         font_name = ('DejaVuSansMono', 'DejaVuSansMono-Bold')[bold]
         font_size = (size, 11)[bold]
         font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/' + font_name + '.ttf', font_size)
 
+        if 'right' in align or 'bottom' in align:
+            w, h = draw.textsize(string, font = font)
+            if 'right' in align:
+                x = cfg.width - (w + x)
+            if 'bottom' in align:
+                y = cfg.height - (h + y)
+        
         draw.text(
             (x, top + y),
             string,
             font = font,
-            fill = 0)
+            fill = 0)                    
     
     @classmethod
     def replace(_, str, replacements):
