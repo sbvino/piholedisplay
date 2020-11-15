@@ -255,19 +255,23 @@ class IO:
 class Collections:
     @classmethod
     def dict_to_columns(_, dict):
+        col_count = 20
         dict_length = len(dict);
         if dict_length == 0:
             return []
         
-        length = 20
-        entries_per_column = dict_length / length
+        if dict_length <= col_count:
+            entries_per_column = 1
+            col_count = dict_length
+        else:
+            entries_per_column = dict_length / col_count
 
-        colums = [0] * length
+        colums = [0] * col_count
         index_dict = 0
 
         for key in dict:
             index = index_dict / entries_per_column;
-            if index >= length:
+            if index >= col_count:
                 continue
             colums[index] += dict[key]
             index_dict += 1
