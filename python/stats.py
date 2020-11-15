@@ -255,8 +255,12 @@ class IO:
 class Collections:
     @classmethod
     def dict_to_columns(_, dict):
+        dict_length = len(dict);
+        if dict_length == 0:
+            return []
+        
         length = 20
-        entries_per_column = len(dict) / length
+        entries_per_column = dict_length / length
 
         colums = [0] * length
         index_dict = 0
