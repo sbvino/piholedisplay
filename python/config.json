@@ -1,7 +1,7 @@
 {
     "pihole" : {
         "api_url": "http://localhost/admin/api.php",
-        "interval_minutes": 5
+        "interval_minutes": 10
     },
     "screen": {        
         "draw_inverted": true,
