@@ -55,7 +55,7 @@ class Stats:
             if success == False:
                 continue
             IO.read_cfg(global_settings);
-    
+
     def render(self, epd, g):
         cfg = g.cfg
         IO.log_obj(g, 'Configuration:', cfg.toDict(), 3)
@@ -142,7 +142,7 @@ Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
 
         # Awakening the display
         epd.init()
-        
+
         # Rendering was successful.
         return True
 
@@ -157,6 +157,5 @@ def main():
     finally:
         IO.log(global_settings, 'Sleeping epd before leaving')
         epd.sleep()
-
 if __name__ == '__main__':
     main()

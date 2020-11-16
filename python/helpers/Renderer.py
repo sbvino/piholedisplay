@@ -2,13 +2,13 @@ import Collections
 import IO
 
 from dotmap import DotMap
-from lib import epd2in13b 
+from lib import epd2in13b
 
 from PIL import Image
-        
-def draw_logo(global_settings, frame_black, frame_red):      
+
+def draw_logo(global_settings, frame_black, frame_red):
     IO.log(global_settings, 'Rendering logo')
-    
+
     pihole_logo_top    = Image.open('img/pihole-bw-80-top.bmp')
     pihole_logo_bottom = Image.open('img/pihole-bw-80-bottom.bmp')
     frame_black.paste(pihole_logo_top, (-12, 2))
@@ -28,7 +28,7 @@ def draw_chart(color, data, factor):
 
 def draw_charts(global_settings, (bottom_color, bottom_chart), (top_color, top_chart)):
     IO.log(global_settings, 'Rendering charts')
-    
+
     factor = max(bottom_chart) / global_settings.cfg.chart.height
 
     draw_chart(bottom_color, bottom_chart, factor)

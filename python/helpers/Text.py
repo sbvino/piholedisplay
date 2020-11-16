@@ -15,12 +15,12 @@ def line(global_settings, draw, x, y, string, bold = False, size = 10, align = '
             x = global_settings.width - (w + x)
         if 'bottom' in align:
             y = global_settings.height - (h + y)
-    
+
     draw.text(
         (x, top + y),
         string,
         font = font,
-        fill = 0)                    
+        fill = 0)
 
 def replace(str, replacements):
     for old, new in replacements:

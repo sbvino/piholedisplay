@@ -3,7 +3,7 @@ def dict_to_columns(dict):
     dict_length = len(dict);
     if dict_length == 0:
         return []
-    
+
     if dict_length <= col_count:
         entries_per_column = 1
         col_count = dict_length
