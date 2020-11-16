@@ -1,6 +1,6 @@
 {
     "options": {
-        "extended_log": false,
+        "log_level": 1,
         "draw_inverted": true,
         "draw_logo": false,
         "interval_minutes": 10,
@@ -10,6 +10,7 @@
         "api_url": "http://localhost/admin/api.php"
     },
     "chart": {
+        "col_count": 20,
         "height": 80.0,
         "x_stat":   [62, 102],
         "x_result": [62, 148]

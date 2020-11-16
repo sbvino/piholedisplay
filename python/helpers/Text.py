@@ -2,6 +2,13 @@ import re
 
 from PIL import ImageFont
 
+# Public methods
+def row(global_settings, draw, x, label, value):
+    y = global_settings.current_row * 15
+    line(global_settings, draw, x[0], y,     str(label), True)
+    line(global_settings, draw, x[1], y + 1, str(value), False)
+    global_settings.current_row += 1
+
 def line(global_settings, draw, x, y, string, bold = False, size = 10, align = ''):
     top = 2
 
@@ -26,9 +33,3 @@ def replace(str, replacements):
     for old, new in replacements:
         str = re.sub(old, new, str)
     return str
-
-def row(global_settings, draw, x, label, value):
-    y = global_settings.current_row * 15
-    line(global_settings, draw, x[0], y,     str(label), True)
-    line(global_settings, draw, x[1], y + 1, str(value), False)
-    global_settings.current_row += 1

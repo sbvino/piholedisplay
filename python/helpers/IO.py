@@ -5,34 +5,67 @@ import subprocess
 
 from dotmap import DotMap
 
+import Collections
+import IO
 import Text
 
+from Enums import Logging
+
+# Public methods
 def shell(command):
     return subprocess.check_output(command, shell = True).strip()
 
-def get_json(url):
-    r = requests.get(url)
-    return json.loads(r.text)
+def get_stats_pihole(cfg):
+    data = __get_json(cfg.pihole.api_url)
 
-def log(global_settings, *args):
-    newline = global_settings.cfg.options.newline
-    print newline + newline.join(args)
+    clients        = data['unique_clients']
+    ads_blocked    = data['ads_blocked_today']
+    ads_percentage = data['ads_percentage_today']
+    dns_queries    = data['dns_queries_today']
+
+    log_obj(cfg, 'API response:', data)
+    return (clients, ads_blocked, ads_percentage, dns_queries)
+
+def get_stats_pihole_history(cfg):
+    data = __get_json(cfg.pihole.api_url + '?overTimeData10mins')
+
+    domains = Collections.dict_to_columns(cfg, data['domains_over_time'])
+    ads     = Collections.dict_to_columns(cfg, data['ads_over_time'])
+
+    return (domains, ads)
 
 def read_cfg(global_settings):
     with open('config.json') as json_file:
         config = DotMap(json.load(json_file))
     global_settings.cfg = config
 
-def log_obj(global_settings, title, obj, depth = 1):
-    newline = global_settings.cfg.options.newline
-    pp = pprint.PrettyPrinter(indent = 2, depth = depth)
+def log(cfg, *args):
+    o = cfg.options
+
+    if o.log_level < Logging.Enabled:
+        return
+
+    print o.newline + o.newline.join(args)
+
+def log_obj(cfg, title, obj, depth = 1):
+    o = cfg.options
+
+    if o.log_level < Logging.Extended:
+        return
+
+    pretty_print = pprint.PrettyPrinter(indent = 2, depth = depth)
 
     str = Text.replace(
-        pp.pformat(obj),
+        pretty_print.pformat(obj),
         [
             ('u?\'', '\''),
-            ('^{', '{' + newline + ' '),
-            ('}$', newline + '}')
+            ('^{', '{' + o.newline + ' '),
+            ('}$', o.newline + '}')
         ])
 
-    log(global_settings, title, str)
+    log(cfg, title, str)
+
+# Private methods
+def __get_json(url):
+    r = requests.get(url)
+    return json.loads(r.text)

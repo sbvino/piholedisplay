@@ -28,7 +28,6 @@
 
 import random
 
-from helpers import Collections
 from helpers import IO
 from helpers import Renderer
 from helpers import Text
@@ -57,11 +56,10 @@ class Stats:
             IO.read_cfg(global_settings);
 
     def render(self, epd, g):
-        cfg = g.cfg
-        if cfg.options.extended_log:
-            IO.log_obj(g, 'Configuration:', cfg.toDict(), 3)
+        c = g.cfg
+        IO.log_obj(c, 'Configuration:', c.toDict(), 3)
 
-        IO.log(g, 'Rendering status')
+        IO.log(c, 'Rendering status')
 
         frame_black = Renderer.new()
         frame_red   = Renderer.new()
@@ -76,62 +74,47 @@ class Stats:
         mem, mem_part   = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB#%.2f%%", $3,$2,$3*100/$2 }\'').split('#', 1)
         disk, disk_part = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB#%s", $3,$2,$5}\'').split('#', 1)
 
-        IO.log(g,
+        IO.log(c,
 '''IP:           {0}
 Host:         {1}
 Memory usage: {2} {3}
 Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
 
         try:
-            data = IO.get_json(cfg.pihole.api_url)
-
-            clients        = data['unique_clients']
-            ads_blocked    = data['ads_blocked_today']
-            ads_percentage = data['ads_percentage_today']
-            dns_queries    = data['dns_queries_today']
-
-            if cfg.options.extended_log:
-                IO.log_obj(g, 'API response:', data)
+            clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(c)
+            domains, ads = IO.get_stats_pihole_history(c)
         except KeyError:
             time.sleep(1)
             return False
 
-        IO.log(g,
+        IO.log(c,
 '''Clients:     {0}
 Ads blocked: {1} {2:.2f}%
 DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
 
-        try:
-            data = IO.get_json(cfg.pihole.api_url + '?overTimeData10mins')
-
-            domains = Collections.dict_to_columns(data['domains_over_time'])
-            ads     = Collections.dict_to_columns(data['ads_over_time'])
-        except KeyError:
-            time.sleep(1)
-            return False
-
-        ads_blocked_label = random.choice(cfg.labels_ads)
-
-        if cfg.options.draw_logo:
-            Renderer.draw_logo(frame_black, frame_red)
+        if c.options.draw_logo:
+            Renderer.draw_logo(c, frame_black, frame_red)
         else:
-            Renderer.draw_charts(g, (black, domains), (red, ads))
+            Renderer.draw_charts(c, (black, domains), (red, ads))
+
+        ads_blocked_label = random.choice(c.labels_ads)
+        percentage_format = ('{0:.2f}%', '{0:.1f}%')[ads_blocked > 9999]
 
         g.current_row = 0
 
-        Text.row(g, black, cfg.chart.x_stat, 'HOST:', host)
-        Text.row(g, black, cfg.chart.x_stat, 'IP:',   ip)
-        Text.row(g, black, cfg.chart.x_stat, 'Mem:',  mem)
-        Text.row(g, black, cfg.chart.x_stat, 'Disk:', disk)
+        Text.row(g, black, c.chart.x_stat, 'HOST:', host)
+        Text.row(g, black, c.chart.x_stat, 'IP:',   ip)
+        Text.row(g, black, c.chart.x_stat, 'Mem:',  mem)
+        Text.row(g, black, c.chart.x_stat, 'Disk:', disk)
 
         Text.line(g, red, 2, 31, mem_part, align = 'right')
         Text.line(g, red, 2, 46, disk_part, align = 'right')
 
-        Text.row(g, black, cfg.chart.x_result, 'Clients:', clients)
-        Text.row(g, black, cfg.chart.x_result, ads_blocked_label + ':', ads_blocked)
-        Text.row(g, black, cfg.chart.x_result, 'DNS Queries:', dns_queries)
+        Text.row(g, black, c.chart.x_result, 'Clients:', clients)
+        Text.row(g, black, c.chart.x_result, ads_blocked_label + ':', ads_blocked)
+        Text.row(g, black, c.chart.x_result, 'DNS Queries:', dns_queries)
 
-        Text.line(g, red, 2, 76, '{0:.2f}%'.format(ads_percentage), align = 'right')
+        Text.line(g, red, 2, 76, percentage_format.format(ads_percentage), align = 'right')
 
         Text.line(g, red, 7,  g.height - 24, 'Pi', size = 11)
         Text.line(g, red, 20, g.height - 24, '-hole', True)
@@ -139,13 +122,13 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
         Text.line(g, black, 13, g.height - 14, u'↻:')
         Text.line(g, black, 23, g.height - 12, strftime('%H:%M', localtime()), size = 8)
 
-        rotation = (Image.ROTATE_90, Image.ROTATE_270)[cfg.options.draw_inverted]
+        rotation = (Image.ROTATE_90, Image.ROTATE_270)[c.options.draw_inverted]
         Renderer.frame(epd, frame_black.transpose(rotation), frame_red.transpose(rotation))
 
-        IO.log(g, 'Rendering completed',
-            'Sleeping for {0} min at {1}'.format(cfg.options.interval_minutes, strftime('%H:%M:%S', localtime())))
+        IO.log(c, 'Rendering completed',
+            'Sleeping for {0} min at {1}'.format(c.options.interval_minutes, strftime('%H:%M:%S', localtime())))
         epd.sleep()
-        epd.delay_ms(cfg.options.interval_minutes * 60 * 1000)
+        epd.delay_ms(c.options.interval_minutes * 60 * 1000)
 
         # Awakening the display
         epd.init()
@@ -155,14 +138,14 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
 
 def main():
     IO.read_cfg(global_settings);
-    IO.log(global_settings, 'Initiating screen...')
+    IO.log(global_settings.cfg, 'Initiating screen...')
     epd = epd2in13b.EPD()
     epd.init()
 
     try:
         Stats(epd, global_settings)
     finally:
-        IO.log(global_settings, 'Sleeping epd before leaving')
+        IO.log(global_settings.cfg, 'Sleeping epd before leaving')
         epd.sleep()
 if __name__ == '__main__':
     main()

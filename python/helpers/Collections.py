@@ -1,5 +1,6 @@
-def dict_to_columns(dict):
-    col_count = 20
+# Public methods
+def dict_to_columns(cfg, dict):
+    col_count = cfg.chart.col_count
     dict_length = len(dict);
     if dict_length == 0:
         return []
