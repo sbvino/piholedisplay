@@ -1,0 +1,28 @@
+{
+    "pihole" : {
+        "api_url": "http://localhost/admin/api.php",
+        "interval_minutes": 5
+    },
+    "screen": {        
+        "draw_inverted": true,
+        "draw_logo": false,        
+        "newline": "\n"
+    },
+    "chart": {        
+        "height": 80.0,        
+        "x_stat":   [62, 102],
+        "x_result": [62, 148]
+    },
+    "labels_ads": [
+        "Ads Blocked",
+        "Ads DENIED",
+        "Ads Wrecked",
+        "Ads YEETed",
+        "Ads? NOPE!",
+        "Banhammered",
+        "Destroyed",
+        "Dismantled",
+        "Obliterated",
+        "Times saved"
+    ]
+}
