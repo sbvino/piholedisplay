@@ -51,7 +51,7 @@ cfg = DotMap(dict(
     width = epd2in13b.EPD_HEIGHT,
     height = epd2in13b.EPD_WIDTH,
     
-    interval_min = 2,
+    interval_min = 0.5,
     chart_height = 80.0,
     current_row = 0,
     x_stat   = (62, 102),
