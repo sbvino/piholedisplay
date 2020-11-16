@@ -25,11 +25,18 @@
     ./start-pihole-stat.sh
     ~~~~
 ### Running on startup
-  - Lastly we just want to make this run at boot. We'll do that the easy way by editing `/etc/rc.local` adding `/home/pi/piholedisplay/start-pihole-stat.sh &` before `exit 0`.
+  - Lastly we just want to make this run at boot. This can be done in different ways:
+#### a: Using `rc.local`:
+  - This can be done by editing `/etc/rc.local`
+  - Open `rc.local`:  `sudo nano /etc/rc.local`
+  -  Add `/home/pi/piholedisplay/start-pihole-stat.sh &` before `exit 0`.
+  ![Editing rc.local](rc.local.png)
+  - Then save and you can reboot to test it out.
 
-![Editing rc.local](rc.local.png)
-  - Then save and you can reboot to test it out
-
-    Use sudo cp pihole-stats.service /etc/systemd/system
+#### b: As a service:
+  - Another option is to run it as a service:
+    ~~~~
+    sudo cp pihole-stats.service /etc/systemd/system
     sudo systemctl daemon-reload
     sudo systemctl enable pihole-stats.service
+    ~~~~
