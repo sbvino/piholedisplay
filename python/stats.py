@@ -50,7 +50,7 @@ global_settings = DotMap(dict(
 
 class Stats:
     def __init__(self, epd, global_settings):
-        while True:
+        while global_settings.cfg.pihole.interval_minutes > 0:
             success = self.render(epd, global_settings)
             if success == False:
                 continue
