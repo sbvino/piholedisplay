@@ -62,10 +62,15 @@ cfg = DotMap(dict(
     newline = '\n',
     ads_labels = [
         'Ads Blocked',
-        'Ads YEETed',
         'Ads DENIED',
-        'Times saved',
-        'Banhammered'
+        'Ads Wrecked',
+        'Ads YEETed',
+        'Ads? NOPE!',
+        'Banhammered',
+        'Destroyed',
+        'Dismantled',
+        'Obliterated',
+        'Times saved'
     ]
 ))
 
