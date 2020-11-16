@@ -15,7 +15,7 @@ def get_json(url):
     return json.loads(r.text)
 
 def log(global_settings, *args):
-    newline = global_settings.cfg.screen.newline
+    newline = global_settings.cfg.options.newline
     print newline + newline.join(args)
 
 def read_cfg(global_settings):
@@ -24,7 +24,7 @@ def read_cfg(global_settings):
     global_settings.cfg = config
 
 def log_obj(global_settings, title, obj, depth = 1):
-    newline = global_settings.cfg.screen.newline
+    newline = global_settings.cfg.options.newline
     pp = pprint.PrettyPrinter(indent = 2, depth = depth)
 
     str = Text.replace(

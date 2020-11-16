@@ -1,15 +1,16 @@
 {
-    "pihole" : {
-        "api_url": "http://localhost/admin/api.php",
-        "interval_minutes": 10
-    },
-    "screen": {        
+    "options": {
+        "extended_log": false,
         "draw_inverted": true,
-        "draw_logo": false,        
+        "draw_logo": false,
+        "interval_minutes": 10,
         "newline": "\n"
     },
-    "chart": {        
-        "height": 80.0,        
+    "pihole" : {
+        "api_url": "http://localhost/admin/api.php"
+    },
+    "chart": {
+        "height": 80.0,
         "x_stat":   [62, 102],
         "x_result": [62, 148]
     },

@@ -50,7 +50,7 @@ global_settings = DotMap(dict(
 
 class Stats:
     def __init__(self, epd, global_settings):
-        while global_settings.cfg.pihole.interval_minutes > 0:
+        while global_settings.cfg.options.interval_minutes > 0:
             success = self.render(epd, global_settings)
             if success == False:
                 continue
@@ -58,7 +58,8 @@ class Stats:
 
     def render(self, epd, g):
         cfg = g.cfg
-        IO.log_obj(g, 'Configuration:', cfg.toDict(), 3)
+        if cfg.options.extended_log:
+            IO.log_obj(g, 'Configuration:', cfg.toDict(), 3)
 
         IO.log(g, 'Rendering status')
 
@@ -89,10 +90,16 @@ Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
             ads_percentage = data['ads_percentage_today']
             dns_queries    = data['dns_queries_today']
 
-            IO.log_obj(g, 'API response:', data)
+            if cfg.options.extended_log:
+                IO.log_obj(g, 'API response:', data)
         except KeyError:
             time.sleep(1)
             return False
+
+        IO.log(g,
+'''Clients:     {0}
+Ads blocked: {1} {2:.2f}%
+DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
 
         try:
             data = IO.get_json(cfg.pihole.api_url + '?overTimeData10mins')
@@ -105,7 +112,7 @@ Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
 
         ads_blocked_label = random.choice(cfg.labels_ads)
 
-        if cfg.screen.draw_logo:
+        if cfg.options.draw_logo:
             Renderer.draw_logo(frame_black, frame_red)
         else:
             Renderer.draw_charts(g, (black, domains), (red, ads))
@@ -132,13 +139,13 @@ Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
         Text.line(g, black, 13, g.height - 14, u'↻:')
         Text.line(g, black, 23, g.height - 12, strftime('%H:%M', localtime()), size = 8)
 
-        rotation = (Image.ROTATE_90, Image.ROTATE_270)[cfg.screen.draw_inverted]
+        rotation = (Image.ROTATE_90, Image.ROTATE_270)[cfg.options.draw_inverted]
         Renderer.frame(epd, frame_black.transpose(rotation), frame_red.transpose(rotation))
 
         IO.log(g, 'Rendering completed',
-            'Sleeping for {0} min at {1}'.format(cfg.pihole.interval_minutes, strftime('%H:%M:%S', localtime())))
+            'Sleeping for {0} min at {1}'.format(cfg.options.interval_minutes, strftime('%H:%M:%S', localtime())))
         epd.sleep()
-        epd.delay_ms(cfg.pihole.interval_minutes * 60 * 1000)
+        epd.delay_ms(cfg.options.interval_minutes * 60 * 1000)
 
         # Awakening the display
         epd.init()
