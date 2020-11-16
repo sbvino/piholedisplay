@@ -54,9 +54,9 @@ class Stats:
             success = self.render(epd, global_settings)
             if success == False:
                 continue
+            IO.read_cfg(global_settings);
     
     def render(self, epd, g):
-        IO.read_cfg(g);
         cfg = g.cfg
         IO.log_obj(g, 'Configuration:', cfg.toDict(), 3)
 
