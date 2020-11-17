@@ -2,16 +2,16 @@ import Collections
 import IO
 
 from dotmap import DotMap
-from lib import epd2in13b
+from lib import epd2in13b as Display
 
 from PIL import Image
 
 # Public methods
-def frame(epd, black, red):
-    epd.display_frame(epd.get_frame_buffer(black), epd.get_frame_buffer(red))
+def frame(display, black, red):
+    display.display_frame(display.get_frame_buffer(black), display.get_frame_buffer(red))
 
 def new():
-    return Image.new('1', (epd2in13b.EPD_HEIGHT, epd2in13b.EPD_WIDTH), 255)
+    return Image.new('1', (Display.EPD_HEIGHT, Display.EPD_WIDTH), 255)
 
 def draw_logo(cfg, frame_black, frame_red):
     IO.log(cfg, 'Rendering logo')
@@ -31,7 +31,7 @@ def draw_charts(cfg, (bottom_color, bottom_chart), (top_color, top_chart)):
 
 # Private methods
 def __draw_chart(color, data, factor):
-    chart_bottom = epd2in13b.EPD_WIDTH - 22
+    chart_bottom = Display.EPD_WIDTH - 22
     columns = Collections.div_array(data, factor)
     for i, val in enumerate(columns):
         color.rectangle((i * 3 + 2, chart_bottom - val, i * 3 + 3, chart_bottom), outline = 0, fill = 1)

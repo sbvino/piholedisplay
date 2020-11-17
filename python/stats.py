@@ -33,7 +33,7 @@ from helpers import Renderer
 from helpers import Text
 
 from dotmap import DotMap
-from lib import epd2in13b
+from lib import epd2in13b as Display
 
 import time
 from time import localtime, strftime
@@ -42,20 +42,20 @@ from PIL import Image
 from PIL import ImageDraw
 
 global_settings = DotMap(dict(
-    width = epd2in13b.EPD_HEIGHT,
-    height = epd2in13b.EPD_WIDTH,
+    width = Display.EPD_HEIGHT,
+    height = Display.EPD_WIDTH,
     current_row = 0
 ))
 
 class Stats:
-    def __init__(self, epd, global_settings):
+    def __init__(self, display, global_settings):
         while global_settings.cfg.options.interval_minutes > 0:
-            success = self.render(epd, global_settings)
+            success = self.render(display, global_settings)
             if success == False:
                 continue
             IO.read_cfg(global_settings);
 
-    def render(self, epd, g):
+    def render(self, display, g):
         c = g.cfg
         IO.log_obj(c, 'Configuration:', c.toDict(), 3)
 
@@ -123,15 +123,15 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
         Text.line(g, black, 23, g.height - 12, strftime('%H:%M', localtime()), size = 8)
 
         rotation = (Image.ROTATE_90, Image.ROTATE_270)[c.options.draw_inverted]
-        Renderer.frame(epd, frame_black.transpose(rotation), frame_red.transpose(rotation))
+        Renderer.frame(display, frame_black.transpose(rotation), frame_red.transpose(rotation))
 
         IO.log(c, 'Rendering completed',
             'Sleeping for {0} min at {1}'.format(c.options.interval_minutes, strftime('%H:%M:%S', localtime())))
-        epd.sleep()
-        epd.delay_ms(c.options.interval_minutes * 60 * 1000)
+        display.sleep()
+        display.delay_ms(c.options.interval_minutes * 60 * 1000)
 
         # Awakening the display
-        epd.init()
+        display.init()
 
         # Rendering was successful.
         return True
@@ -139,13 +139,13 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
 def main():
     IO.read_cfg(global_settings);
     IO.log(global_settings.cfg, 'Initiating screen...')
-    epd = epd2in13b.EPD()
-    epd.init()
+    display = Display.EPD()
+    display.init()
 
     try:
-        Stats(epd, global_settings)
+        Stats(display, global_settings)
     finally:
-        IO.log(global_settings.cfg, 'Sleeping epd before leaving')
-        epd.sleep()
+        IO.log(global_settings.cfg, 'Sleeping display before leaving')
+        display.sleep()
 if __name__ == '__main__':
     main()
