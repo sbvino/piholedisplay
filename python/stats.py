@@ -1,6 +1,5 @@
-#!/usr/bin/env python
 # encoding: utf-8
-
+#!/usr/bin/env python
 #  @filename   :   stats.py
 #  @brief      :   Render Pi-Hole stats to 2.13inch e-paper.
 #  @author     :   @Cerbrus on GitHub
@@ -8,7 +7,7 @@
 #  Copyright (C) Waveshare     September 9 2017
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documnetation files (the "Software"), to deal
+# of this software and associated docunetation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to  whom the Software is
@@ -21,109 +20,160 @@
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS OR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
 # AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# LIABILITY WHETHER IN AN ACTioN OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTioN WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 ##
 
+'''Render statistics to the Pi-Hole's screen every X minutes'''
+
 import random
 import time
-from time import localtime, strftime
 
 from PIL import Image, ImageDraw
-from dotmap import DotMap
 
-from helpers import IO, Renderer, Text
+from helpers import io as IO, renderer as Renderer
+from helpers.text import Text
+from helpers.collections import dot_dict
+
 from lib import epd2in13b as Display
 
-global_settings = DotMap(dict(
-    width = Display.EPD_HEIGHT,
-    height = Display.EPD_WIDTH,
-    current_row = 0
-))
-
+# pylint: disable=too-few-public-methods
 class Stats:
-    def __init__(self, display, global_settings):
-        while global_settings.cfg.options.interval_minutes > 0:
-            success = self.render(display, global_settings)
-            if success == False:
-                continue
-            IO.read_cfg(global_settings);
+    '''The Stats class
 
-    def render(self, display, g):
-        c = g.cfg
-        IO.log_obj(c, 'Configuration:', c.toDict(), 3)
+    This class is responsible for collecting all statistics we wish to display
+    on the Pi-Hole's E-paper screen, and subsequently rendering it.
+    '''
+    def __init__(self):
+        settings = dot_dict(
+            width = Display.EPD_HEIGHT,
+            height = Display.EPD_WIDTH,
+            current_row = 0
+        )
 
-        IO.log(c, 'Rendering status')
-
-        frame_black = Renderer.new()
-        frame_red   = Renderer.new()
-
-        black = ImageDraw.Draw(frame_black)
-        red   = ImageDraw.Draw(frame_red)
-
-        black.rectangle((0, 0, g.width, g.height), outline = 0, fill = None)
-
-        ip              = IO.shell('hostname -I | cut -d" " -f1')
-        host            = IO.shell('hostname').lower() + '.local'
-        mem, mem_part   = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB#%.2f%%", $3,$2,$3*100/$2 }\'').split('#', 1)
-        disk, disk_part = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB#%s", $3,$2,$5}\'').split('#', 1)
-
-        IO.log(c,
-'''IP:           {0}
-Host:         {1}
-Memory usage: {2} {3}
-Disk:         {4} {5}'''.format(ip, host, mem, mem_part, disk, disk_part))
+        IO.read_cfg(settings)
+        IO.log(settings.cfg, 'Initiating screen...')
+        display = Display.EPD()
+        display.init()
 
         try:
-            clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(c)
-            domains, ads = IO.get_stats_pihole_history(c)
+            while settings.cfg.options.interval_minutes > 0:
+                success = self.__render(display, settings)
+                if not success:
+                    continue
+                IO.read_cfg(settings)
+        finally:
+            IO.log(settings.cfg, 'Sleeping display before leaving')
+            display.sleep()
+
+    @classmethod
+    def __get_stats_pihole(cls, cfg):
+        try:
+            clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(cfg)
+            domains, ads = IO.get_stats_pihole_history(cfg)
         except KeyError:
             time.sleep(1)
             return False
 
-        IO.log(c,
-'''Clients:     {0}
+        IO.log(cfg, '''Clients:     {0}
 Ads blocked: {1} {2:.2f}%
 DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
 
-        if c.options.draw_logo:
-            Renderer.draw_logo(c, frame_black, frame_red)
+        return dot_dict(
+            clients        = clients,
+            ads_blocked    = ads_blocked,
+            ads_percentage = ads_percentage,
+            dns_queries    = dns_queries,
+            domains        = domains,
+            ads            = ads
+        )
+
+    @classmethod
+    def __get_stats_system(cls, cfg):
+        ip_address      = IO.shell('hostname -I | cut -d" " -f1')
+        host            = IO.shell('hostname').lower() + '.local'
+        mem, mem_part   = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB#%.2f%%", $3,$2,$3*100/$2 }\'').split('#', 1)
+        disk, disk_part = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB#%s", $3,$2,$5}\'').split('#', 1)
+
+        IO.log(cfg, '''IP:           {0}
+Host:         {1}
+Memory usage: {2} {3}
+Disk:         {4} {5}'''.format(ip_address, host, mem, mem_part, disk, disk_part))
+
+        return dot_dict(
+            ip_address = ip_address,
+            host       = host,
+            mem        = mem,
+            mem_part   = mem_part,
+            disk       = disk,
+            disk_part  = disk_part
+        )
+
+    @classmethod
+    def __render(cls, display, settings):
+        cfg = settings.cfg
+        chart = cfg.chart
+
+        IO.log_obj(cfg, 'Configuration:', cfg.toDict(), 3)
+
+        IO.log(cfg, 'Rendering status')
+
+        images = dot_dict(
+            black = Renderer.new_image(),
+            red   = Renderer.new_image()
+        )
+        draw = dot_dict(
+            black = ImageDraw.Draw(images.black),
+            red   = ImageDraw.Draw(images.red)
+        )
+        text = dot_dict(
+            black = Text(settings, draw.black),
+            red   = Text(settings, draw.red)
+        )
+
+        draw.black.rectangle((0, 0, settings.width, settings.height), outline = 0, fill = None)
+
+        system = cls.__get_stats_system(cfg)
+        pihole = cls.__get_stats_pihole(cfg)
+
+        if cfg.options.draw_logo:
+            Renderer.draw_logo(cfg, images)
         else:
-            Renderer.draw_charts(c, black, domains, red, ads)
+            Renderer.draw_charts(cfg, draw, pihole.domains, pihole.ads)
 
-        ads_blocked_label = random.choice(c.labels_ads)
-        percentage_format = ('{0:.2f}%', '{0:.1f}%')[ads_blocked > 9999]
+        ads_blocked_label = random.choice(cfg.labels_ads)
+        percentage_format = '{0:.1f}%' if pihole.ads_blocked > 9999 else '{0:.2f}%'
 
-        g.current_row = 0
+        settings.current_row = 0
 
-        Text.row(g, black, c.chart.x_stat, 'HOST:', host)
-        Text.row(g, black, c.chart.x_stat, 'IP:',   ip)
-        Text.row(g, black, c.chart.x_stat, 'Mem:',  mem)
-        Text.row(g, black, c.chart.x_stat, 'Disk:', disk)
+        text.black.row(chart.x_stat, 'HOST:', system.host)
+        text.black.row(chart.x_stat, 'IP:',   system.ip_address)
+        text.black.row(chart.x_stat, 'Mem:',  system.mem)
+        text.black.row(chart.x_stat, 'Disk:', system.disk)
 
-        Text.line(g, red, 2, 31, mem_part, align = 'right')
-        Text.line(g, red, 2, 46, disk_part, align = 'right')
+        text.red.line(2, 31, system.mem_part, align = 'right')
+        text.red.line(2, 46, system.disk_part, align = 'right')
 
-        Text.row(g, black, c.chart.x_result, 'Clients:', clients)
-        Text.row(g, black, c.chart.x_result, ads_blocked_label + ':', ads_blocked)
-        Text.row(g, black, c.chart.x_result, 'DNS Queries:', dns_queries)
+        text.black.row(chart.x_result, 'Clients:', pihole.clients)
+        text.black.row(chart.x_result, ads_blocked_label + ':', pihole.ads_blocked)
+        text.black.row(chart.x_result, 'DNS Queries:', pihole.dns_queries)
 
-        Text.line(g, red, 2, 76, percentage_format.format(ads_percentage), align = 'right')
+        text.red.line(2, 76, percentage_format.format(pihole.ads_percentage), align = 'right')
 
-        Text.line(g, red, 7,  g.height - 24, 'Pi', size = 11)
-        Text.line(g, red, 20, g.height - 24, '-hole', True)
+        text.red.line(7,  settings.height - 24, 'Pi', size = 11)
+        text.red.line(20, settings.height - 24, '-hole', True)
 
-        Text.line(g, black, 13, g.height - 14, u'↻:')
-        Text.line(g, black, 23, g.height - 12, strftime('%H:%M', localtime()), size = 8)
+        text.black.line(13, settings.height - 14, u'↻:')
+        text.black.line(23, settings.height - 12, time.strftime('%H:%M', time.localtime()), size = 8)
 
-        rotation = (Image.ROTATE_90, Image.ROTATE_270)[c.options.draw_inverted]
-        Renderer.frame(display, frame_black.transpose(rotation), frame_red.transpose(rotation))
+        rotation = Image.ROTATE_270 if cfg.options.draw_inverted else Image.ROTATE_90
+        Renderer.frame(display, images.black.transpose(rotation), images.red.transpose(rotation))
 
-        IO.log(c, 'Rendering completed',
-            'Sleeping for {0} min at {1}'.format(c.options.interval_minutes, strftime('%H:%M:%S', localtime())))
+        now = time.strftime('%H:%M:%S', time.localtime())
+        IO.log(cfg, 'Rendering completed\nSleeping for {0} min at {1}'.format(cfg.options.interval_minutes, now))
         display.sleep()
-        display.delay_ms(c.options.interval_minutes * 60 * 1000)
+        display.delay_ms(cfg.options.interval_minutes * 60 * 1000)
 
         # Awakening the display
         display.init()
@@ -131,16 +181,5 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
         # Rendering was successful.
         return True
 
-def main():
-    IO.read_cfg(global_settings);
-    IO.log(global_settings.cfg, 'Initiating screen...')
-    display = Display.EPD()
-    display.init()
-
-    try:
-        Stats(display, global_settings)
-    finally:
-        IO.log(global_settings.cfg, 'Sleeping display before leaving')
-        display.sleep()
 if __name__ == '__main__':
-    main()
+    Stats()
