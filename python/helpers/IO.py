@@ -5,13 +5,12 @@ import subprocess
 
 from dotmap import DotMap
 
-import Collections, Text
-
-from Enums import Logging
+from . import Collections, Text
+from .Enums import Logging
 
 # Public methods
 def shell(command):
-    return subprocess.check_output(command, shell = True).strip()
+    return str(subprocess.check_output(command, shell = True)).strip()
 
 def get_stats_pihole(cfg):
     data = __get_json(cfg.pihole.api_url)
@@ -43,7 +42,7 @@ def log(cfg, *args):
     if o.log_level < Logging.Enabled:
         return
 
-    print o.newline + o.newline.join(args)
+    print(o.newline + o.newline.join(args))
 
 def log_obj(cfg, title, obj, depth = 1):
     o = cfg.options

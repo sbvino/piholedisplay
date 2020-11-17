@@ -1,6 +1,6 @@
 from PIL import Image
 
-import Collections, IO
+from . import Collections, IO
 
 from lib import epd2in13b as Display
 
@@ -19,7 +19,7 @@ def draw_logo(cfg, frame_black, frame_red):
     frame_black.paste(pihole_logo_top, (-12, 2))
     frame_red.paste(pihole_logo_bottom, (-12, 2))
 
-def draw_charts(cfg, (bottom_color, bottom_chart), (top_color, top_chart)):
+def draw_charts(cfg, bottom_color, bottom_chart, top_color, top_chart):
     IO.log(cfg, 'Rendering charts')
 
     factor = max(bottom_chart) / cfg.chart.height

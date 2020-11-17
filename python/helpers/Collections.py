@@ -15,7 +15,7 @@ def dict_to_columns(cfg, dict):
     index_dict = 0
 
     for key in dict:
-        index = index_dict / entries_per_column;
+        index = int(index_dict / entries_per_column);
         if index >= col_count:
             continue
         colums[index] += dict[key]

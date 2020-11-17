@@ -90,7 +90,7 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
         if c.options.draw_logo:
             Renderer.draw_logo(c, frame_black, frame_red)
         else:
-            Renderer.draw_charts(c, (black, domains), (red, ads))
+            Renderer.draw_charts(c, black, domains, red, ads)
 
         ads_blocked_label = random.choice(c.labels_ads)
         percentage_format = ('{0:.2f}%', '{0:.1f}%')[ads_blocked > 9999]
