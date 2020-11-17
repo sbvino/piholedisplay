@@ -1,4 +1,6 @@
 #!/bin/bash
 
-pylint stats.py --rcfile=.pylintrc
-pylint helpers --rcfile=.pylintrc
+clear
+
+python3 -m pylint stats.py --rcfile=.pylintrc
+#python3 -m pylint helpers --rcfile=.pylintrc
