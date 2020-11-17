@@ -1,3 +1,4 @@
+# pylint: skip-file
 ##
  #  @filename   :   epdif.py
  #  @brief      :   EPD hardware interface implements (GPIO, SPI)

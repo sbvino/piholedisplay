@@ -1,3 +1,4 @@
+# pylint: skip-file
 ##
  #  @filename   :   epd2in13b.py
  #  @brief      :   Implements for Dual-color e-paper library

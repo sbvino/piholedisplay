@@ -134,7 +134,9 @@ disable=print-statement,
         deprecated-sys-function,
         exception-escape,
         comprehension-escape,
-        bad-whitespace
+        bad-whitespace,
+        no-member,
+        no-name-in-module
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -329,7 +331,7 @@ min-similarity-lines=4
 additional-builtins=
 
 # Tells whether unused global variables should be treated as a violation.
-allow-global-unused-variables=no
+allow-global-unused-variables=yes
 
 # List of strings which can identify a callback function by name. A callback
 # name must start or end with one of those strings.
@@ -455,7 +457,7 @@ notes=FIXME,
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=7
 
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7
