@@ -1,4 +1,4 @@
-import re
+import re as regex
 
 from PIL import ImageFont
 
@@ -10,7 +10,7 @@ def row(global_settings, draw, x, label, value):
     global_settings.current_row += 1
 
 def line(global_settings, draw, x, y, string, bold = False, size = 10, align = ''):
-    top = 2
+    top = global_settings.cfg.chart.margin
 
     font_name = ('DejaVuSansMono', 'DejaVuSansMono-Bold')[bold]
     font_size = (size, 11)[bold]
@@ -31,5 +31,5 @@ def line(global_settings, draw, x, y, string, bold = False, size = 10, align = '
 
 def replace(str, replacements):
     for old, new in replacements:
-        str = re.sub(old, new, str)
+        str = regex.sub(old, new, str)
     return str

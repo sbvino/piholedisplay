@@ -1,10 +1,8 @@
-import Collections
-import IO
-
-from dotmap import DotMap
-from lib import epd2in13b as Display
-
 from PIL import Image
+
+import Collections, IO
+
+from lib import epd2in13b as Display
 
 # Public methods
 def frame(display, black, red):

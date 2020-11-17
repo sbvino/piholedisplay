@@ -27,19 +27,14 @@
 ##
 
 import random
-
-from helpers import IO
-from helpers import Renderer
-from helpers import Text
-
-from dotmap import DotMap
-from lib import epd2in13b as Display
-
 import time
 from time import localtime, strftime
 
-from PIL import Image
-from PIL import ImageDraw
+from PIL import Image, ImageDraw
+from dotmap import DotMap
+
+from helpers import IO, Renderer, Text
+from lib import epd2in13b as Display
 
 global_settings = DotMap(dict(
     width = Display.EPD_HEIGHT,

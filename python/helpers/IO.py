@@ -5,9 +5,7 @@ import subprocess
 
 from dotmap import DotMap
 
-import Collections
-import IO
-import Text
+import Collections, Text
 
 from Enums import Logging
 
