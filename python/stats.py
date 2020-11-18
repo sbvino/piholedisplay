@@ -35,6 +35,7 @@ from PIL import Image, ImageDraw
 from helpers import io as IO, renderer as Renderer
 from helpers.text import Text
 from helpers.collections import dot_dict
+from helpers.log import Logger
 
 from lib import epd2in13b as Display
 
@@ -49,34 +50,38 @@ class Stats:
         settings = dot_dict(
             width = Display.EPD_HEIGHT,
             height = Display.EPD_WIDTH,
-            current_row = 0
-        )
+            current_row = 0)
 
         IO.read_cfg(settings)
-        IO.log(settings.cfg, 'Initiating screen...')
+
+        log = Logger(settings.cfg)
+
+        log.info(settings.cfg, 'Initiating screen...')
         display = Display.EPD()
         display.init()
 
         try:
             while settings.cfg.options.interval_minutes > 0:
-                success = self.__render(display, settings)
+                success = self.__render(display, settings, log)
                 if not success:
+                    log.error(settings.cfg, 'Render failure! Aborting.')
                     continue
                 IO.read_cfg(settings)
         finally:
-            IO.log(settings.cfg, 'Sleeping display before leaving')
+            log.info(settings.cfg, 'Sleeping display before leaving')
             display.sleep()
 
     @classmethod
-    def __get_stats_pihole(cls, cfg):
+    def __get_stats_pihole(cls, cfg, log):
         try:
-            clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(cfg)
+            clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(cfg, log)
             domains, ads = IO.get_stats_pihole_history(cfg)
         except KeyError:
+            log.error(cfg, 'Error getting Pi-Hole stats!')
             time.sleep(1)
             return False
 
-        IO.log(cfg, '''Clients:     {0}
+        log.info(cfg, '''Clients:     {0}
 Ads blocked: {1} {2:.2f}%
 DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
 
@@ -90,13 +95,13 @@ DNS Queries: {3}'''.format(clients, ads_blocked, ads_percentage, dns_queries))
         )
 
     @classmethod
-    def __get_stats_system(cls, cfg):
+    def __get_stats_system(cls, cfg, log):
         ip_address      = IO.shell('hostname -I | cut -d" " -f1')
         host            = IO.shell('hostname').lower() + '.local'
         mem, mem_part   = IO.shell('free -m | awk \'NR==2{printf "%s/%s MB#%.2f%%", $3,$2,$3*100/$2 }\'').split('#', 1)
         disk, disk_part = IO.shell('df -h | awk \'$NF=="/"{printf "%d/%d GB#%s", $3,$2,$5}\'').split('#', 1)
 
-        IO.log(cfg, '''IP:           {0}
+        log.info(cfg, '''IP:           {0}
 Host:         {1}
 Memory usage: {2} {3}
 Disk:         {4} {5}'''.format(ip_address, host, mem, mem_part, disk, disk_part))
@@ -111,13 +116,13 @@ Disk:         {4} {5}'''.format(ip_address, host, mem, mem_part, disk, disk_part
         )
 
     @classmethod
-    def __render(cls, display, settings):
+    def __render(cls, display, settings, log):
         cfg = settings.cfg
         chart = cfg.chart
 
-        IO.log_obj(cfg, 'Configuration:', cfg.toDict(), 3)
+        log.debug.obj(cfg, 'Configuration:', cfg.toDict(), 3)
 
-        IO.log(cfg, 'Rendering status')
+        log.info(cfg, 'Rendering status')
 
         images = dot_dict(
             black = Renderer.new_image(),
@@ -134,13 +139,13 @@ Disk:         {4} {5}'''.format(ip_address, host, mem, mem_part, disk, disk_part
 
         draw.black.rectangle((0, 0, settings.width, settings.height), outline = 0, fill = None)
 
-        system = cls.__get_stats_system(cfg)
-        pihole = cls.__get_stats_pihole(cfg)
+        system = cls.__get_stats_system(cfg, log)
+        pihole = cls.__get_stats_pihole(cfg, log)
 
         if cfg.options.draw_logo:
-            Renderer.draw_logo(cfg, images)
+            Renderer.draw_logo(cfg, log, images)
         else:
-            Renderer.draw_charts(cfg, draw, pihole.domains, pihole.ads)
+            Renderer.draw_charts(cfg, log, draw, pihole.domains, pihole.ads)
 
         ads_blocked_label = random.choice(cfg.labels_ads)
         percentage_format = '{0:.1f}%' if pihole.ads_blocked > 9999 else '{0:.2f}%'
@@ -171,7 +176,7 @@ Disk:         {4} {5}'''.format(ip_address, host, mem, mem_part, disk, disk_part
         Renderer.frame(display, images.black.transpose(rotation), images.red.transpose(rotation))
 
         now = time.strftime('%H:%M:%S', time.localtime())
-        IO.log(cfg, 'Rendering completed\nSleeping for {0} min at {1}'.format(cfg.options.interval_minutes, now))
+        log.info(cfg, 'Rendering completed\nSleeping for {0} min at {1}'.format(cfg.options.interval_minutes, now))
         display.sleep()
         display.delay_ms(cfg.options.interval_minutes * 60 * 1000)
 

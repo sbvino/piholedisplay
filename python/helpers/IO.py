@@ -1,17 +1,12 @@
 '''The io module has several helper functions to read and log data'''
 
 import json
-import pprint
+import requests
 import subprocess
-
-import collections as Collections
 
 from dotmap import DotMap
 
-import requests
-
-from text import Text
-from enums import Logging
+import collections as Collections
 
 # Public methods
 def shell(command):
@@ -25,7 +20,7 @@ def shell(command):
     '''
     return str(subprocess.check_output(command, shell = True)).strip()
 
-def get_stats_pihole(cfg):
+def get_stats_pihole(cfg, log):
     '''Get stats for the Pi-Hole instance.
 
     Args:
@@ -41,7 +36,7 @@ def get_stats_pihole(cfg):
     ads_percentage = data['ads_percentage_today']
     dns_queries    = data['dns_queries_today']
 
-    log_obj(cfg, 'API response:', data)
+    log.debug.obj(cfg, 'API response:', data)
     return (clients, ads_blocked, ads_percentage, dns_queries)
 
 def get_stats_pihole_history(cfg):
@@ -69,53 +64,6 @@ def read_cfg(module_settings):
     with open('config.json') as json_file:
         config = DotMap(json.load(json_file))
     module_settings.cfg = config
-
-def log(cfg, *args):
-    '''Log the parameters.
-
-    Args:
-        cfg (DotMap): The configuration.
-        *args (list): Parameters to be logged.
-    '''
-    opts = cfg.options
-
-    if opts.log_level < Logging.ENABLED.value:
-        return
-
-    print(opts.newline + opts.newline.join(args))
-
-def log_obj(cfg, title, obj, depth = 1):
-    '''Log the object with a title, pretty printed.
-
-    Args:
-        cfg (DotMap): The configuration.
-        title (string): The title to log.
-        obj (dict): The object to log.
-        depth (type): To what depth to object should be expanded.
-
-    Returns:
-        type: Description of returned object.
-
-    Raises:
-        ExceptionName: Why the exception is raised.
-
-    '''
-    opts = cfg.options
-
-    if opts.log_level < Logging.EXTENDED.value:
-        return
-
-    pretty_print = pprint.PrettyPrinter(indent = 2, depth = depth)
-
-    msg = Text.replace(
-        pretty_print.pformat(obj),
-        [
-            ('u?\'', '\''),
-            ('^{', '{' + opts.newline + ' '),
-            ('}$', opts.newline + '}')
-        ])
-
-    log(cfg, title, msg)
 
 # Private methods
 def __get_json(url):

@@ -1,10 +1,11 @@
 {
     "options": {
-        "log_level": 1,
+        "log_level": 10,
         "draw_inverted": true,
         "draw_logo": false,
         "interval_minutes": 10,
-        "newline": "\n"
+        "newline": "\n",
+        "log_dir": "log"
     },
     "pihole" : {
         "api_url": "http://localhost/admin/api.php"

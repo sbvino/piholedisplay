@@ -1,9 +1,8 @@
 '''The renderer module has several helper functions to render graphs or images to the screen'''
 
-import collections as Collections
-import io as IO
-
 from PIL import Image
+
+import collections as Collections
 
 from lib import epd2in13b as Display
 
@@ -26,21 +25,21 @@ def new_image():
     '''
     return Image.new('1', (Display.EPD_HEIGHT, Display.EPD_WIDTH), 255)
 
-def draw_logo(cfg, images):
+def draw_logo(cfg, log, images):
     '''Render the logo to the black and red images.
 
     Args:
         cfg (DotMap): The configuration.
         images (dict): The images to paste the two colored parts to.
     '''
-    IO.log(cfg, 'Rendering logo')
+    log.info(cfg, 'Rendering logo')
 
     pihole_logo_top    = Image.open('img/pihole-bw-80-top.bmp')
     pihole_logo_bottom = Image.open('img/pihole-bw-80-bottom.bmp')
     images.black.paste(pihole_logo_top, (-12, 2))
     images.red.paste(pihole_logo_bottom, (-12, 2))
 
-def draw_charts(cfg, image_draw, bottom_chart, top_chart):
+def draw_charts(cfg, log, image_draw, bottom_chart, top_chart):
     '''Draw the chart.
 
     Args:
@@ -49,7 +48,7 @@ def draw_charts(cfg, image_draw, bottom_chart, top_chart):
         bottom_chart (dict): A dictionary containing the totals data.
         top_chart (dict): A dictionary containing the sub-data.
     '''
-    IO.log(cfg, 'Rendering charts')
+    log.info(cfg, 'Rendering charts')
 
     factor = max(bottom_chart) / cfg.chart.height
 
