@@ -39,7 +39,7 @@ This section contains options that apply to how the stats module behaves.
 | `draw_logo`        | `false` | Set to `true` to render the "Pi-Hole" logo, or `false` to render the graph. |
 | `interval_minutes` | `10`    | The time between screen refreshes. If set to `0`, the loop will terminate after the next refresh. |
 | `newline`          | `'\n'`  | The newline sequence to use in debug prints / logs. |
-| `log_level`        | `40`    | Determines the minimum log level for messages to be looged to file. The log levels will be listed below this table. |
+| `log_level`        | `40`    | Determines the minimum log level for messages to be logged to file. The log levels will be listed below this table. |
 | `log_dir`          | `'log'` | Which dir the logs will be written to, relative to the `stats.py` file. |
 
 ### Log levels:
