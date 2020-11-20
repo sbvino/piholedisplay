@@ -76,9 +76,9 @@ class Stats:
         try:
             clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(cfg, log)
             if cfg.options.draw_logo:
-                domains, ads = IO.get_stats_pihole_history(cfg) 
-            else:
                 domains, ads = (None, None)
+            else:
+                domains, ads = IO.get_stats_pihole_history(cfg) 
         except KeyError:
             log.error(cfg, 'Error getting Pi-Hole stats!')
             time.sleep(1)
