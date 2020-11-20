@@ -81,12 +81,12 @@ class LogWrapper():
         '''
         opts = cfg.options
 
+        message = opts.newline + opts.newline.join(args)
+        print(message)
+
         # Don't log if the log level for this call is lower than the configured log level.
         if self.log_level < opts.log_level:
             return
-
-        message = opts.newline + opts.newline.join(args)
-        print(message)
 
         logfile_message = Text.replace(
             message,
@@ -113,10 +113,6 @@ class LogWrapper():
 
         '''
         opts = cfg.options
-
-        # Don't log if the log level for this call is lower than the configured log level.
-        if self.log_level < opts.log_level:
-            return
 
         pretty_print = pprint.PrettyPrinter(indent = 2, depth = depth)
 
