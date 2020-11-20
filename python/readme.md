@@ -42,7 +42,7 @@ This section contains options that apply to how the stats module behaves.
 | `log_level`         | `40`    | Determines the minimum log level for messages to be logged to file. The log levels will be listed at the [bottom of this page](#log-levels). |
 | `log_dir`           | `"log"` | Which dir the logs will be written to, relative to the `stats.py` file. |
 
-## `"options"`
+## `"pihole"`
 This section contains options concerning the Pi-Hole instance.
 
 |  Setting  |               Default               | Function |
