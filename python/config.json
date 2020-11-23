@@ -20,13 +20,25 @@
     "labels_ads": [
         "Ads Blocked",
         "Ads DENIED",
+        "Ads Killed",
+        "Ads Unseen",
+        "Ads Veto'd",
         "Ads Wrecked",
         "Ads YEETed",
+        "Ads Zapped",
         "Ads? NOPE!",
+        "Annihilated",
         "Banhammered",
         "Destroyed",
         "Dismantled",
+        "Downvoted",
+        "Eliminated",
+        "Eradicated",
         "Obliterated",
+        "Pi-Hole'd",
+        "Rejected",
+        "Slapped",
+        "Slaughtered",
         "Times saved"
     ]
 }
