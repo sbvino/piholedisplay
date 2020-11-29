@@ -12,17 +12,23 @@
   - Enable spi, i2c and edit the modules config file as given [here](https://www.waveshare.com/wiki/Pioneer600#Configuring_the_interfaces)
   - [Optional] Download demo code from [here](https://www.waveshare.com/wiki/File:2.13inch_e-Paper_HAT-code.7z) and run it to make sure everything is working
 
-  - also install the requests library and dotmap libraries (needs pip to be installed)
+  - Also install the requests library and dotmap libraries (needs pip to be installed)
     ~~~~
     sudo pip install requests
     pip3 install dotmap
     ~~~~
 ### Final steps
-  - If you downloaded the demo code, just place the stats.py inside the 2.13inch_e-Paper_HAT-code/raspberrypi/python folder
-  - If you didnot download the demo code, copy the python folder from this repo into your pi folder.
-  - run the stats.py script using
+  - Clone this repository onto a suitable forlder on your Pi.
     ~~~~
-    ./start-pihole-stat.sh
+    git clone https://github.com/Cerbrus/piholedisplay.git
+    ~~~~
+  - Navigate to the `/python` folder
+    ~~~~
+    cd piholedisplay/python/
+    ~~~~
+  - Run the stats.py script using
+    ~~~~
+    python stats.py
     ~~~~
 ### Running on startup
   - Lastly we just want to make this run at boot. This can be done in different ways:
