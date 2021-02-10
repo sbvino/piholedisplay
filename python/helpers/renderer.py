@@ -2,9 +2,9 @@
 
 from PIL import Image
 
-import collections as Collections
+import helpers.collections as Collections
 
-from lib import epd2in13b as Display
+from lib import epd2in7b as Display
 
 # Public methods
 def frame(display, black, red):
@@ -15,7 +15,7 @@ def frame(display, black, red):
         black (PIL.Image.Image): the background (black) image.
         red (PIL.Image.Image): The foreground (colored) image.
     '''
-    display.display_frame(display.get_frame_buffer(black), display.get_frame_buffer(red))
+    display.display(display.getbuffer(black), display.getbuffer(red))
 
 def new_image():
     '''Create a new Image object.

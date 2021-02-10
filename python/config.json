@@ -1,8 +1,8 @@
 {
     "options": {
         "log_level": 40,
-        "draw_inverted": true,
-        "draw_logo": false,
+        "draw_inverted": false,
+        "draw_logo": true,
         "interval_minutes": 10,
         "newline": "\n",
         "log_dir": "log"
@@ -13,7 +13,7 @@
     "chart": {
         "margin": 2,
         "col_count": 20,
-        "height": 80.0,
+        "height": 50,
         "x_stat":   [62, 102],
         "x_result": [62, 148]
     },

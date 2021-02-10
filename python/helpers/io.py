@@ -6,7 +6,7 @@ import subprocess
 
 from dotmap import DotMap
 
-import collections as Collections
+import helpers.collections as Collections
 
 # Public methods
 def shell(command):

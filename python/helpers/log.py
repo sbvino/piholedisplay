@@ -6,7 +6,7 @@ import pprint
 
 from datetime import date
 
-from text import Text
+from helpers.text import Text
 
 # pylint: disable=too-few-public-methods
 class Logger():

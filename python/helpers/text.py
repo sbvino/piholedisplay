@@ -39,7 +39,7 @@ class Text:
         self.line(pos_x[1], pos_y + 1, str(value), False)
         self.module_settings.current_row += 1
 
-    def line(self, pos_x, pos_y, message, bold = False, size = 10, align = ''):
+    def line(self, pos_x, pos_y, message, bold = False, size = 11, align = ''):
         '''Render a line of text.
 
         Args:
@@ -53,7 +53,7 @@ class Text:
         top = self.module_settings.cfg.chart.margin
 
         font_name = 'DejaVuSansMono-Bold' if bold else 'DejaVuSansMono'
-        font_size = 11 if bold else size
+        font_size = 12 if bold else size
         font = ImageFont.truetype('/usr/share/fonts/truetype/dejavu/' + font_name + '.ttf', font_size)
 
         if 'right' in align or 'bottom' in align:

@@ -37,7 +37,7 @@ from helpers.text import Text
 from helpers.collections import dot_dict
 from helpers.log import Logger
 
-from lib import epd2in13b as Display
+from lib import epd2in7b as Display
 
 # pylint: disable=too-few-public-methods
 class Stats:
@@ -76,7 +76,8 @@ class Stats:
         try:
             clients, ads_blocked, ads_percentage, dns_queries = IO.get_stats_pihole(cfg, log)
             if cfg.options.draw_logo:
-                domains, ads = (None, None)
+#                domains, ads = (None, None)
+                 domains, ads = IO.get_stats_pihole_history(cfg)
             else:
                 domains, ads = IO.get_stats_pihole_history(cfg) 
         except KeyError:
@@ -147,6 +148,7 @@ Disk:         {4} {5}'''.format(ip_address, host, mem, mem_part, disk, disk_part
 
         if cfg.options.draw_logo:
             Renderer.draw_logo(cfg, log, images)
+            Renderer.draw_charts(cfg, log, draw, pihole.domains, pihole.ads)
         else:
             Renderer.draw_charts(cfg, log, draw, pihole.domains, pihole.ads)
 
